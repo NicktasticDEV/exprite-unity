@@ -1,0 +1,13 @@
+{
+    "name": "com.nicktastictoons.exprite",
+    "version": "1.0.0",
+    "displayName": "Exprite",
+    "description": "Play sparrow/starling spritesheets",
+    "unity": "6000.0",
+    "author": 
+    {
+      "name": "NicktasticToons"
+    }
+}
+  
+  
