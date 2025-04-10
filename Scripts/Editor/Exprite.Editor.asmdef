@@ -1,0 +1,18 @@
+{
+    "name": "Exprite.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:c8cadde7f67404e58b7ab06f7db92131"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
