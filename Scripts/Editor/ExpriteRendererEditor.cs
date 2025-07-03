@@ -18,7 +18,7 @@ public class ExpriteRendererEditor : Editor
         GUILayout.Space(10);
 
         // Playback controls
-        GUILayout.Label("Playback Controls", EditorStyles.boldLabel);
+        GUILayout.Label("Playback Controls (Debug Only)", EditorStyles.boldLabel);
         
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("Play"))

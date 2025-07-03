@@ -7,6 +7,9 @@ public class ExpriteAnimationPackEditor : Editor
 {
     public override void OnInspectorGUI()
     {
+        DrawDefaultInspector();
+
+        /*
         ExpriteAnimationPack animationPack = (ExpriteAnimationPack)target;
 
         GUILayout.Label("Exprite Animation Pack Editor", EditorStyles.boldLabel);
@@ -35,5 +38,6 @@ public class ExpriteAnimationPackEditor : Editor
         }
 
         serializedObject.ApplyModifiedProperties();
+        */
     }
 }
