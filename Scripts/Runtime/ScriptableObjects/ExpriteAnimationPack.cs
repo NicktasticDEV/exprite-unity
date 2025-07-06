@@ -10,7 +10,7 @@ namespace Exprite
     public class ExpriteAnimationPack : ScriptableObject
     {
         // Public fields
-        public Texture2D texture;
+        public Sprite texture;
         public TextAsset atlas;
         public Vector2 globalOffset;
         public AnimationDefinition[] animations;

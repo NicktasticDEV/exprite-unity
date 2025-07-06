@@ -95,7 +95,7 @@ namespace Exprite
                     if (!PreloadAnimations)
                     {
                         SubTexture subTextureFrame = subTextures[frameIndex];
-                        float adjustedY = AnimationPack.texture.height - subTextureFrame.y - subTextureFrame.height;
+                        float adjustedY = AnimationPack.texture.texture.height - subTextureFrame.y - subTextureFrame.height;
 
                         Vector2 pivot = new Vector2(
                             (subTextureFrame.frameX - animation.offset.x - AnimationPack.globalOffset.x) / subTextureFrame.width,
@@ -103,9 +103,10 @@ namespace Exprite
                         );
 
                         _spriteRenderer.sprite = Sprite.Create(
-                            AnimationPack.texture,
+                            AnimationPack.texture.texture,
                             new Rect(subTextureFrame.x, adjustedY, subTextureFrame.width, subTextureFrame.height),
-                            pivot
+                            pivot,
+                            AnimationPack.texture.pixelsPerUnit
                         );
                     }
                     else
@@ -150,7 +151,7 @@ namespace Exprite
 
                     foreach (SubTexture subTexture in subTextures)
                     {
-                        float adjustedY = AnimationPack.texture.height - subTexture.y - subTexture.height;
+                        float adjustedY = AnimationPack.texture.texture.height - subTexture.y - subTexture.height;
 
                         Vector2 pivot = new Vector2(
                             (subTexture.frameX - animation.offset.x - AnimationPack.globalOffset.x) / subTexture.width,
@@ -158,9 +159,10 @@ namespace Exprite
                         );
 
                         Sprite sprite = Sprite.Create(
-                            AnimationPack.texture,
+                            AnimationPack.texture.texture,
                             new Rect(subTexture.x, adjustedY, subTexture.width, subTexture.height),
-                            pivot
+                            pivot,
+                            AnimationPack.texture.pixelsPerUnit
                         );
 
                         sprites.Add(sprite);
