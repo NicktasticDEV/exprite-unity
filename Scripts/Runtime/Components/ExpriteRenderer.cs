@@ -8,6 +8,7 @@ using UnityEditor;
 
 namespace Exprite
 {
+    [AddComponentMenu("Exprite/Exprite Renderer")]
     [RequireComponent(typeof(SpriteRenderer))]
     public class ExpriteRenderer : MonoBehaviour
     {
