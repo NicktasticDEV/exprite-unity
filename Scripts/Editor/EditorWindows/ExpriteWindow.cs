@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-public class ExpriteWindow : EditorWindow
+public class ExpriteWindow : UnityEditor.EditorWindow
 {
     [MenuItem("Window/Exprite")]
     public static void ShowWindow()
