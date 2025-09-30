@@ -2,19 +2,16 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 namespace Exprite
 {
     [AddComponentMenu("Exprite/Exprite Renderer")]
-    [RequireComponent(typeof(SpriteRenderer))]
+
+    [RequireComponent(typeof(MeshRenderer))]
+    [RequireComponent(typeof(MeshFilter))]
     public class ExpriteRenderer : MonoBehaviour
     {
         // Public fields
         public ExpriteAnimationPack AnimationPack;
-        public bool PreloadAnimations = false;
 
         public AnimationDefinition? CurrentAnimation { get; private set; }
         public bool IsPlaying { get; private set; }
@@ -22,7 +19,8 @@ namespace Exprite
 
         // Private fields
         private static Dictionary<ExpriteAnimationPack, Dictionary<string, List<Sprite>>> _preloadedAnimations = new Dictionary<ExpriteAnimationPack, Dictionary<string, List<Sprite>>>();
-        private SpriteRenderer _spriteRenderer;
+        private MeshRenderer _meshRenderer;
+        private MeshFilter _meshFilter;
         private ExpriteAnimationPack _previousAnimationPack;
 
         #region Lifecycle
@@ -30,17 +28,9 @@ namespace Exprite
         // Initialize stuff
         void Awake()
         {
-            _spriteRenderer = GetComponent<SpriteRenderer>();
+            _meshRenderer = GetComponent<MeshRenderer>();
+            _meshFilter = GetComponent<MeshFilter>();
             _previousAnimationPack = AnimationPack;
-
-            if (PreloadAnimations && AnimationPack != null)
-            {
-                PreloadAnimationPack();
-            }
-
-            #if UNITY_EDITOR
-            EditorApplication.playModeStateChanged += OnExitPlayMode;
-            #endif 
         }
 
         void Update()
@@ -48,7 +38,6 @@ namespace Exprite
             // Check if the animation pack has changed
             if (_previousAnimationPack != AnimationPack && AnimationPack != null)
             {
-                OnSparrowAnimationPackChanged();
                 _previousAnimationPack = AnimationPack;
             }
         }
@@ -57,7 +46,7 @@ namespace Exprite
 
         #region Animation Controls
 
-        public void Play(string animationName, int frame=0)
+        public void Play(string animationName, int frame = 0)
         {
             if (IsPlaying)
             {
@@ -71,7 +60,7 @@ namespace Exprite
 
         #region Implementation Details
 
-        IEnumerator PlayAnimation(string animationName, int frame=0)
+        IEnumerator PlayAnimation(string animationName, int frame = 0)
         {
             AnimationDefinition animation = AnimationPack.GetAnimationDefinitionByName(animationName);
 
@@ -91,30 +80,62 @@ namespace Exprite
                 // Check if we need to move to the next frame
                 if (timeAccumulator >= timePerFrame)
                 {
+                    animation = AnimationPack.GetAnimationDefinitionByName(animationName);
                     timeAccumulator -= timePerFrame;
 
-                    if (!PreloadAnimations)
+                    // Update the sprite to the current frame
+                    SubTexture subTextureFrame = subTextures[frameIndex];
+                    
+                    Mesh mesh = new Mesh();
+                    float width = subTextureFrame.width / AnimationPack.texture.pixelsPerUnit;
+                    float height = subTextureFrame.height / AnimationPack.texture.pixelsPerUnit;
+                    float xOffset = (subTextureFrame.frameX - animation.offset.x - AnimationPack.globalOffset.x) / AnimationPack.texture.pixelsPerUnit;
+                    float yOffset = ((subTextureFrame.frameY) / subTextureFrame.height  - animation.offset.y - AnimationPack.globalOffset.y) / AnimationPack.texture.pixelsPerUnit;
+
+                    // Vertices
+                    Vector3[] vertices = new Vector3[]
                     {
-                        SubTexture subTextureFrame = subTextures[frameIndex];
-                        float adjustedY = AnimationPack.texture.texture.height - subTextureFrame.y - subTextureFrame.height;
+                        new Vector3(0 - xOffset, 0 - yOffset, 0),
+                        new Vector3(width - xOffset, 0 - yOffset, 0),
+                        new Vector3(0 - xOffset, height - yOffset, 0),
+                        new Vector3(width - xOffset, height - yOffset, 0)
+                    };
 
-                        Vector2 pivot = new Vector2(
-                            (subTextureFrame.frameX - animation.offset.x - AnimationPack.globalOffset.x) / subTextureFrame.width,
-                            1f - ((subTextureFrame.frameY + animation.offset.y + AnimationPack.globalOffset.y) / subTextureFrame.height)
-                        );
-
-                        _spriteRenderer.sprite = Sprite.Create(
-                            AnimationPack.texture.texture,
-                            new Rect(subTextureFrame.x, adjustedY, subTextureFrame.width, subTextureFrame.height),
-                            pivot,
-                            AnimationPack.texture.pixelsPerUnit
-                        );
-                    }
-                    else
+                    // Triangles
+                    int[] triangles = new int[]
                     {
-                        _spriteRenderer.sprite = _preloadedAnimations[AnimationPack][animationName][frameIndex];
-                    }
+                        0, 2, 1,
+                        2, 3, 1
+                    };
 
+                    // UVs
+                    float texWidth = AnimationPack.texture.texture.width;
+                    float texHeight = AnimationPack.texture.texture.height;
+                    // Sparrow is top-left origin based while Unity's UV origin is bottom-left based
+                    // Convert by flipping the V coordinates
+                    float uMin = subTextureFrame.x / texWidth;
+                    float uMax = (subTextureFrame.x + subTextureFrame.width) / texWidth;
+                    float vTopSource = subTextureFrame.y;
+                    float vBottomSource = subTextureFrame.y + subTextureFrame.height;
+                    float vMin = 1f - vBottomSource / texHeight;
+                    float vMax = 1f - vTopSource / texHeight;
+                    Vector2[] uvs = new Vector2[]
+                    {
+                        new Vector2(uMin, vMin),
+                        new Vector2(uMax, vMin),
+                        new Vector2(uMin, vMax),
+                        new Vector2(uMax, vMax)
+                    };
+
+                    // Set
+                    mesh.vertices = vertices;
+                    mesh.triangles = triangles;
+                    mesh.uv = uvs;
+                    mesh.RecalculateNormals();
+                    _meshFilter.mesh = mesh;
+                    _meshRenderer.material.mainTexture = AnimationPack.texture.texture;
+                    
+                    // Frame done
                     frameIndex++;
 
                     // Check if we reached the end of the animation
@@ -137,72 +158,6 @@ namespace Exprite
                 yield return null;
             }
         }
-
-        void PreloadAnimationPack()
-        {
-            if (!_preloadedAnimations.ContainsKey(AnimationPack))
-            {
-                Dictionary<string, List<Sprite>> animations = new Dictionary<string, List<Sprite>>();
-
-                foreach (AnimationDefinition animation in AnimationPack.animations)
-                {
-                    List<Sprite> sprites = new List<Sprite>();
-
-                    SubTexture[] subTextures = AnimationPack.GetSubTexturesFromAnimationDefinition(animation);
-
-                    foreach (SubTexture subTexture in subTextures)
-                    {
-                        float adjustedY = AnimationPack.texture.texture.height - subTexture.y - subTexture.height;
-
-                        Vector2 pivot = new Vector2(
-                            (subTexture.frameX - animation.offset.x - AnimationPack.globalOffset.x) / subTexture.width,
-                            1f - ((subTexture.frameY + animation.offset.y + AnimationPack.globalOffset.y) / subTexture.height)
-                        );
-
-                        Sprite sprite = Sprite.Create(
-                            AnimationPack.texture.texture,
-                            new Rect(subTexture.x, adjustedY, subTexture.width, subTexture.height),
-                            pivot,
-                            AnimationPack.texture.pixelsPerUnit
-                        );
-
-                        sprites.Add(sprite);
-                    }
-
-                    animations.Add(animation.name, sprites);
-                }
-
-                _preloadedAnimations.Add(AnimationPack, animations);
-            }
-            else
-            {
-                Debug.Log("Animation Pack already preloaded");
-            }
-        }
-
-        void OnSparrowAnimationPackChanged()
-        {
-            Debug.Log("Sparrow Animation Pack Changed");
-            if (PreloadAnimations)
-            {
-                PreloadAnimationPack();
-            }
-        }
-
-        #endregion
-
-        #region Miscellaneous
-    
-        #if UNITY_EDITOR
-        void OnExitPlayMode(PlayModeStateChange state)
-        {
-            if (state == PlayModeStateChange.ExitingPlayMode)
-            {
-                _preloadedAnimations.Clear();
-            }
-        }
-        #endif
-
         #endregion
     }
 }
