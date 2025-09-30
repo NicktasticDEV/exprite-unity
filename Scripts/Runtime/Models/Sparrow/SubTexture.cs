@@ -23,7 +23,6 @@ namespace Exprite
         [XmlAttribute(AttributeName="height")] 
         public int height { get; set; } 
 
-        // (We know FrameX and frameY are for positioning the frame, but frameWidth and frameHeight are unknown)
         [XmlAttribute(AttributeName="frameX")] 
         public int frameX { get; set; } 
 

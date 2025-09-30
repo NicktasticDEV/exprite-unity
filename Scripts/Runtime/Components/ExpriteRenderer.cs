@@ -89,16 +89,20 @@ namespace Exprite
                     Mesh mesh = new Mesh();
                     float width = subTextureFrame.width / AnimationPack.texture.pixelsPerUnit;
                     float height = subTextureFrame.height / AnimationPack.texture.pixelsPerUnit;
-                    float xOffset = (subTextureFrame.frameX - animation.offset.x - AnimationPack.globalOffset.x) / AnimationPack.texture.pixelsPerUnit;
-                    float yOffset = ((subTextureFrame.frameY) / subTextureFrame.height  - animation.offset.y - AnimationPack.globalOffset.y) / AnimationPack.texture.pixelsPerUnit;
+
+                    float frameWidth = subTextureFrame.frameWidth == 0 ? subTextureFrame.width : subTextureFrame.frameWidth;
+                    float frameHeight = subTextureFrame.frameHeight == 0 ? subTextureFrame.height : subTextureFrame.frameHeight;
+
+                    float xOffset = ((subTextureFrame.frameX + frameWidth / 2) - animation.offset.x - AnimationPack.globalOffset.x) / AnimationPack.texture.pixelsPerUnit;
+                    float yOffset = ((subTextureFrame.frameY - subTextureFrame.height + frameHeight / 2) - animation.offset.y - AnimationPack.globalOffset.y) / AnimationPack.texture.pixelsPerUnit;
 
                     // Vertices
                     Vector3[] vertices = new Vector3[]
                     {
-                        new Vector3(0 - xOffset, 0 - yOffset, 0),
-                        new Vector3(width - xOffset, 0 - yOffset, 0),
-                        new Vector3(0 - xOffset, height - yOffset, 0),
-                        new Vector3(width - xOffset, height - yOffset, 0)
+                        new Vector3(0 - xOffset, 0 + yOffset, 0),
+                        new Vector3(width - xOffset, 0 + yOffset, 0),
+                        new Vector3(0 - xOffset, height + yOffset, 0),
+                        new Vector3(width - xOffset, height + yOffset, 0)
                     };
 
                     // Triangles
